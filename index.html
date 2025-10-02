@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LOS OJOS Üretim Takip Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'background': 'var(--background)',
+              'surface': 'var(--surface)',
+              'primary': 'var(--primary)',
+              'secondary': 'var(--secondary)',
+              'text-primary': 'var(--text-primary)',
+              'text-secondary': 'var(--text-secondary)',
+              'border-color': 'var(--border-color)',
+            },
+            animation: {
+              'fade-in-up': 'fade-in-up 0.3s ease-out forwards',
+              'fade-in': 'fade-in 0.2s ease-out forwards',
+            },
+            keyframes: {
+              'fade-in-up': {
+                'from': { opacity: '0', transform: 'translateY(10px)' },
+                'to': { opacity: '1', transform: 'translateY(0)' },
+              },
+              'fade-in': {
+                'from': { opacity: '0' },
+                'to': { opacity: '1' },
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      :root { /* Light Theme Defaults */
+        --background: #F3F4F6;
+        --surface: #FFFFFF;
+        --primary: #2563EB;
+        --secondary: #059669;
+        --text-primary: #1F2937;
+        --text-secondary: #4B5563;
+        --border-color: #E5E7EB;
+      }
+
+      html.dark { /* Dark Theme Overrides */
+        --background: #111827;
+        --surface: #1F2937;
+        --primary: #3B82F6;
+        --secondary: #10B981;
+        --text-primary: #F9FAFB;
+        --text-secondary: #9CA3AF;
+        --border-color: #374151;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--background);
+        color: var(--text-primary);
+        transition: background-color 0.3s, color 0.3s;
+      }
+      
+      .prose {
+        color: var(--text-primary);
+      }
+      
+      .prose p {
+         margin: 0;
+      }
+
+      .prose-invert p {
+        color: var(--text-primary) !important;
+      }
+      
+      .prose-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+      
+    </style>
+    <script>
+      // Flicker mitigation script
+      (function() {
+        try {
+          const theme = localStorage.getItem('theme');
+          if (theme === 'light') {
+            document.documentElement.classList.remove('dark');
+          } else {
+            // Defaults to dark if theme is 'dark' or not set
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          // If localStorage is not available, default to dark.
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.1.1/client",
+    "recharts": "https://aistudiocdn.com/recharts@^3.2.1",
+    "uuid": "https://aistudiocdn.com/uuid@^9.0.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+    "vite": "https://aistudiocdn.com/vite@^7.1.7",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "fs/": "https://aistudiocdn.com/fs@^0.0.1-security/",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
+    "url": "https://aistudiocdn.com/url@^0.11.4",
+    "cors": "https://aistudiocdn.com/cors@^2.8.5",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.3",
+    "globals": "https://aistudiocdn.com/globals@^16.4.0",
+    "eslint/": "https://aistudiocdn.com/eslint@^9.36.0/",
+    "eslint-plugin-react-hooks": "https://aistudiocdn.com/eslint-plugin-react-hooks@^5.2.0",
+    "eslint-plugin-react-refresh": "https://aistudiocdn.com/eslint-plugin-react-refresh@^0.4.21",
+    "@eslint/js": "https://aistudiocdn.com/@eslint/js@^9.36.0",
+    "typescript-eslint": "https://aistudiocdn.com/typescript-eslint@^8.44.1",
+    "serverless-http": "https://aistudiocdn.com/serverless-http@^4.0.0",
+    "sqlite3": "https://aistudiocdn.com/sqlite3@^5.1.7",
+    "sqlite": "https://aistudiocdn.com/sqlite@^5.1.1"
+  }
+}
+</script>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

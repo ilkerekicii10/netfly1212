@@ -3,11 +3,6 @@ import cors from 'cors';
 import serverless from 'serverless-http';
 import { db, initDb } from '../../server/database.js';
 
-// Initialize the database when the function is cold-started
-await initDb().catch(err => {
-  console.error("Failed to initialize database in Netlify function:", err);
-});
-
 const app = express();
 
 // Middleware
@@ -309,4 +304,11 @@ createCrudEndpoints('defect_reasons');
 app.use('/.netlify/functions/api', router);
 
 // Export the handler for Netlify
-export const handler = serverless(app);
+export const handler = async (event, context) => {
+  // Ensure the database is initialized on cold starts
+  await initDb();
+  
+  const serverlessHandler = serverless(app);
+  // Pass the event and context to the serverless handler
+  return serverlessHandler(event, context);
+};

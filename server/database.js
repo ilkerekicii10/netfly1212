@@ -20,6 +20,8 @@ const MOCK_DEFECT_REASONS = [ { id: 1, name: 'DİKİŞ HATASI' }, { id: 2, name:
 
 
 export async function initDb() {
+  if (db) return; // Prevent re-initialization
+
   db = await open({
     filename: DB_PATH,
     driver: sqlite3.Database

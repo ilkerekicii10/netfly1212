@@ -5,7 +5,10 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Simplified DB path for local-first development
 const DB_PATH = path.join(__dirname, 'los-ojos.db');
+
 
 export let db;
 

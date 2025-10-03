@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { db, initDb } from './database.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 async function startServer() {
   // Initialize Database
@@ -310,8 +312,22 @@ async function startServer() {
   createCrudEndpoints('producers');
   createCrudEndpoints('defect_reasons');
   
+  // Serve static assets in production and handle SPA routing
+  if (process.env.NODE_ENV === 'production') {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const distPath = path.join(__dirname, '..', 'dist');
+  
+    app.use(express.static(distPath));
+  
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
   app.listen(port, () => {
-    console.log(`Development API server started at http://localhost:${port}`);
+    const mode = process.env.NODE_ENV === 'production' ? 'Production' : 'Development';
+    console.log(`${mode} API server started at http://localhost:${port}`);
   });
 }
 

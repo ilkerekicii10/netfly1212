@@ -101,8 +101,7 @@ const Toast: React.FC<{ toast: ToastState; onDismiss: (id: number) => void }> = 
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>(parsePath().view);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(parsePath().id);
-  const [selectedCuttingReportKey, setSelectedCuttingReportKey] = useState<string | null>(parsePath().id);
+  const [selectedId, setSelectedId] = useState<string | null>(parsePath().id);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark');
   const [toasts, setToasts] = useState<ToastState[]>([]);
@@ -170,7 +169,7 @@ const App: React.FC = () => {
     addToast('Stok kaydı arşivlendi.', { onUndo: () => restoreStockEntry(entryId) });
   };
   
-  const navigateTo = (view: View, id: string | null = null) => {
+  const navigateTo = useCallback((view: View, id: string | null = null) => {
     const { view: currentView, id: currentId } = parsePath();
     if (view === currentView && id === currentId) return;
 
@@ -180,39 +179,43 @@ const App: React.FC = () => {
     }
     window.history.pushState({ view, id }, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
-  };
+  }, []);
 
+  // Effect to handle URL changes (e.g., back/forward buttons)
   useEffect(() => {
     const handlePopState = () => {
         const { view, id } = parsePath();
         setActiveView(view);
-        
-        // Reset all IDs first
-        setSelectedGroupId(null);
-        setSelectedCuttingReportKey(null);
-
-        // Then set the correct one based on the new view
-        if (view === 'orderDetail') {
-            setSelectedGroupId(id);
-        } else if (view === 'cuttingReportDetail') {
-            setSelectedCuttingReportKey(id);
-        } else if (view === 'editOrder' && id) {
-            const orderToEdit = orders.find(o => o.groupId === id);
-            if (orderToEdit) setEditingItem(orderToEdit);
-        }
+        setSelectedId(id);
     };
 
     window.addEventListener('popstate', handlePopState);
+    handlePopState(); // Sync state on initial load
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [orders]);
-  
+  }, []);
+
+  // Effect to find and set the item being edited based on the active view and ID
   useEffect(() => {
-    const isEditView = ['editOrder', 'editStockEntry', 'editCuttingReport'].includes(activeView);
-    if (!isEditView) {
+    if (activeView === 'editOrder' && selectedId) {
+        if (orders.length > 0) {
+            const orderToEdit = orders.find(o => o.groupId === selectedId);
+            if (orderToEdit) setEditingItem(orderToEdit);
+        }
+    } else if (activeView === 'editStockEntry' && selectedId) {
+        if (stockEntries.length > 0) {
+            const stockToEdit = stockEntries.find(s => s.id === selectedId);
+            if (stockToEdit) setEditingItem(stockToEdit);
+        }
+    } else if (activeView === 'editCuttingReport' && selectedId) {
+         if (cuttingReports.length > 0) {
+            const reportsToEdit = cuttingReports.filter(r => r.groupId === selectedId);
+            if (reportsToEdit.length > 0) setEditingItem(reportsToEdit);
+        }
+    } else {
       setEditingItem(null);
     }
-  }, [activeView]);
-
+  }, [activeView, selectedId, orders, stockEntries, cuttingReports]);
+  
   const handleDeleteOrder = (groupId: string) => {
     deleteOrderGroup(groupId);
   };
@@ -242,8 +245,7 @@ const App: React.FC = () => {
   };
 
   const handleEditItem = (item: EditableItem) => {
-    setEditingItem(item);
-    if (item.hasOwnProperty('groupId')) {
+    if (item.hasOwnProperty('groupId') && !Array.isArray(item)) {
         const orderItem = item as Order;
         navigateTo('editOrder', orderItem.groupId);
     } else if (Array.isArray(item)) {
@@ -285,8 +287,8 @@ const App: React.FC = () => {
       case 'orders':
         return <OrderList orders={orders} producers={producers} onViewDetails={handleSelectOrder} onEdit={handleEditItem} onDelete={handleDeleteOrder} onCreateStockEntry={handleCreateStockEntryFromOrder} />;
       case 'orderDetail': {
-        const selectedOrderGroup = selectedGroupId ? orders.filter(order => order.groupId === selectedGroupId) : [];
-        if (!selectedGroupId || selectedOrderGroup.length === 0) {
+        const selectedOrderGroup = selectedId ? orders.filter(order => order.groupId === selectedId) : [];
+        if (!selectedId || selectedOrderGroup.length === 0) {
             return <div className="text-center p-8"><p className="text-text-secondary">Sipariş bulunamadı veya yükleniyor...</p></div>;
         }
         return <OrderDetail orders={selectedOrderGroup} stockUsage={stockUsage} cuttingReports={cuttingReports} stockEntries={stockEntries} producers={producers} onClose={handleCloseDetail} onReassign={reassignMultipleParts} onViewCuttingReport={(id) => navigateTo('cuttingReportDetail', id)} addToast={addToast} />
@@ -294,8 +296,8 @@ const App: React.FC = () => {
       case 'cuttingReport':
         return <CuttingReportComponent reports={cuttingReports} orders={orders} onViewDetails={handleSelectCuttingReport} onEdit={handleEditItem} />;
       case 'cuttingReportDetail': {
-        const reportGroup = selectedCuttingReportKey ? cuttingReports.filter(r => r.groupId === selectedCuttingReportKey) : [];
-        if (!selectedCuttingReportKey || reportGroup.length === 0) {
+        const reportGroup = selectedId ? cuttingReports.filter(r => r.groupId === selectedId) : [];
+        if (!selectedId || reportGroup.length === 0) {
             return <div className="text-center p-8"><p className="text-text-secondary">Rapor bulunamadı veya yükleniyor...</p></div>;
         }
         return <CuttingReportDetail reports={reportGroup} orders={orders} onClose={() => navigateTo('cuttingReport')} />
@@ -307,11 +309,11 @@ const App: React.FC = () => {
       case 'stockEntry':
         return <StockEntryForm colors={colorNames} defectReasons={defectReasons} onSave={addStockEntries} addColor={addColor} prefillData={stockEntryPrefill} onBack={() => { setStockEntryPrefill(null); navigateTo('stockRecords'); }} addToast={addToast} />;
       case 'editOrder':
-        return <OrderEntry colors={colorNames} allOrders={orders} itemToEdit={editingItem as Order} onUpdate={syncProductColorOrders} onCancel={handleCancelEdit} addColor={addColor} addToast={addToast}/>;
+        return editingItem ? <OrderEntry colors={colorNames} allOrders={orders} itemToEdit={editingItem as Order} onUpdate={syncProductColorOrders} onCancel={handleCancelEdit} addColor={addColor} addToast={addToast}/> : null;
       case 'editStockEntry':
-          return <StockEntryForm colors={colorNames} defectReasons={defectReasons} itemToEdit={editingItem as StockEntry} onUpdate={handleUpdateStockEntry} onCancel={handleCancelEdit} addColor={addColor} addToast={addToast} />;
+          return editingItem ? <StockEntryForm colors={colorNames} defectReasons={defectReasons} itemToEdit={editingItem as StockEntry} onUpdate={handleUpdateStockEntry} onCancel={handleCancelEdit} addColor={addColor} addToast={addToast} /> : null;
       case 'editCuttingReport':
-        return <CuttingReportForm itemsToEdit={editingItem as CuttingReport[]} ordersForReport={ordersForEditingReport} onUpdate={handleUpdateCuttingReport} onCancel={handleCancelEdit} addToast={addToast}/>
+        return editingItem ? <CuttingReportForm itemsToEdit={editingItem as CuttingReport[]} ordersForReport={ordersForEditingReport} onUpdate={handleUpdateCuttingReport} onCancel={handleCancelEdit} addToast={addToast}/> : null;
       case 'workshopManagement':
         return <WorkshopManagement producers={producers} producerPerformanceStats={producerPerformanceStats} addProducer={addProducer} updateProducer={updateProducer} deleteProducer={deleteProducer} orders={orders} allStockEntries={allStockEntries} stockUsage={stockUsage} cuttingReports={cuttingReports} onViewOrderDetails={handleSelectOrder} />;
       case 'defectManagement':
@@ -332,7 +334,7 @@ const App: React.FC = () => {
           <MenuIcon className="h-6 w-6"/>
       </button>
 
-      <main className={`flex-1 p-4 sm:p-6 transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+      <main className={`flex-1 p-4 sm:p-6 transition-all duration-300 lg:ml-64`}>
         {renderActiveView()}
       </main>
       
